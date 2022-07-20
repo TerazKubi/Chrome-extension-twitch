@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            width: 450px;
+            height: 550px;
+
+
+            color: black;
+            font-size: 20px;
+            background-color: white;
+        }
+        .streamers{
+            max-height: 400px;
+            overflow: scroll;
+            overflow-x: hidden;
+        }
+        .streamer{
+            width: 100%;
+            
+            background-color: silver;
+            margin-top: 5px;
+            position: relative;
+        }
+        .streamer img{
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            
+        }
+        .loginBtnDisable{
+            visibility: hidden;
+        }
+        .online{
+            background-color: red;
+        }
+        .offline{
+            background-color: silver;
+        }
+        .dot{
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            position: absolute;
+            left: 30px;
+            top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="title">
+        <p>Log in</p>
+    </div>
+    
+    <div>
+        <input type="button" value="Zaloguj" id="loginBtn">
+        
+    </div>
+    <div>
+        <input type="text" id="inputStreamerName">
+        <input type="button" value="Dodaj" id="addStreamerBtn">
+        <input type="button" value="clear" id="clearBtn">
+        <input type="button" value="check" id="checkBtn">
+    </div>
+
+    <div class="streamers"></div>
+
+    <div class="output">TMP OUTPUT</div>
+
+    <script src="./popup_script.js"></script>
+    
+</body>
+
+</html>

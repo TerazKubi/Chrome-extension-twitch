@@ -8,14 +8,12 @@ const output = document.querySelector(".output")
 const title = document.querySelector(".title")
 
 
-//at the start when user open pop up window
-is_user_logged_in()
 
 
 
-loginBtn.addEventListener("click", e => {
-    login()
-})
+// loginBtn.addEventListener("click", e => {
+//     login()
+// })
 
 //at the start read 
 clearBtn.addEventListener("click", e => {
@@ -24,20 +22,9 @@ clearBtn.addEventListener("click", e => {
         console.log(res.message)
     })
 })
+
 checkBtn.addEventListener("click", e => {
-    chrome.runtime.sendMessage({message: "check"}, (res)=>{
-        console.log(res.message)
-        if(res.message === "success") {
-            console.log(res.data)
-            for (let i = 0; i < res.data.length; i++){
-                var div = document.querySelector("#name" + res.data[i].user_login)
-                div.innerHTML = res.data[i].user_name + " gierka: " + res.data[i].game_name + " widzowie: " + res.data[i].viewer_count
-                var dotDiv = document.querySelector("#dot"+res.data[i].user_login)
-                dotDiv.classList.remove("offline")
-                dotDiv.classList.add("online")
-            }
-        }
-    })
+    checkStreams()
 })
 addStreamerBtn.addEventListener("click", (e)=>{
 
@@ -76,17 +63,24 @@ addStreamerBtn.addEventListener("click", (e)=>{
     streamerNameInput.focus()
 })
 
+//at the start when user open pop up window
+//is_user_logged_in()
+start()
 
 
-
-function login(){
+function login(resolve){
+    
     chrome.runtime.sendMessage({message: "login"}, (res)=>{
-        if (res.message === "login_success"){
+        console.log(res)
+        if (res.message === "login_success" || res.message === "already_signed"){
             title.innerHTML = "<p>Logged in</p>"
             loginBtn.classList.add("loginBtnDisable")
-            getStreamersFromStorageAndDisplay()
-        }
+        } 
+        resolve()
+            
     })
+    
+    
 }
 function is_user_logged_in(){
     chrome.runtime.sendMessage({message: "check_login"}, (res)=>{
@@ -108,7 +102,8 @@ function delStreamer(streamerLogin) {
     })
 }
 
-function getStreamersFromStorageAndDisplay(){
+function getStreamersFromStorageAndDisplay(resolve){
+    
     chrome.runtime.sendMessage({message: "get_all_streamers"}, (res)=>{
         console.log("loading data from storage and displaying it")
         if (res.data.length < 1) return
@@ -131,7 +126,48 @@ function getStreamersFromStorageAndDisplay(){
             streamersDiv.appendChild(newStreamerDiv)
         })
         
+        resolve()
+    })
+    
+}
+
+function checkStreams(){
+    
+    chrome.runtime.sendMessage({message: "check"}, (res)=>{
+        console.log(res.message)
+        if(res.message === "success") {
+            console.log(res.data)
+            for (let i = 0; i < res.data.length; i++){
+                var div = document.querySelector("#name" + res.data[i].user_login)
+                div.innerHTML = res.data[i].user_name + " gierka: " + res.data[i].game_name + " widzowie: " + res.data[i].viewer_count + " " + res.data[i].title
+                var dotDiv = document.querySelector("#dot"+res.data[i].user_login)
+                dotDiv.classList.remove("offline")
+                dotDiv.classList.add("online")
+            }
+        }
+        else if ( res.message === "fail") {
+            console.log("fail z popup")
+        }
+            
         
     })
 }
+function start() {
+    var prom = new Promise( (resolve, reject) => {
+        getStreamersFromStorageAndDisplay(resolve)
+        console.log("po get streamers data")
+        
+    })
 
+    prom.then(()=>{
+        console.log("przed login")
+        return new Promise((resolve, reject)=>{
+            login(resolve)
+            
+        })       
+    }).then(() => {
+        checkStreams()
+    })
+
+    
+}

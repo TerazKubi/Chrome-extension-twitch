@@ -17,8 +17,11 @@ function create_twitch_endpoint() {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === "login") {
-    login(sendResponse);
-  } else if (request.message === "add_streamer") {
+    if (user_signed) sendResponse({message: "already_signed"})
+    else login(sendResponse)
+
+  } 
+  else if (request.message === "add_streamer") {
     let userlogin = request.streamer;
     if (user_signed) {
       addStreamer(userlogin, sendResponse);
@@ -27,19 +30,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       login(sendResponse);
       addStreamer(userlogin, sendResponse);
     }
-  } else if (request.message === "check_login") {
+  } 
+  else if (request.message === "check_login") {
     if (user_signed) {
       sendResponse({ message: { user_logged_in: true } });
       return;
     }
     sendResponse({ message: { user_logged_in: false } });
-  } else if (request.message === "clear") {
+  } 
+  else if (request.message === "clear") {
     chrome.storage.local.clear();
     console.log("clearing");
     sendResponse({ message: "pogchamp" });
-  } else if (request.message === "check") {
+  } 
+  else if (request.message === "check") {
     checkStreams(sendResponse);
-  } else if (request.message === "delete_streamer") {
+  } 
+  else if (request.message === "delete_streamer") {
     chrome.storage.local.get(["all"], (data) => {
       var allStreamersArray = data["all"];
       var newArray = allStreamersArray.filter(
@@ -47,7 +54,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       );
       chrome.storage.local.set({ all: newArray });
     });
-  } else if (request.message === "get_all_streamers") {
+  } 
+  else if (request.message === "get_all_streamers") {
     var allStreamers;
     chrome.storage.local.get(["all"], (data) => {
       allStreamers = data["all"];
@@ -110,37 +118,31 @@ function login(sendRes) {
   if (user_signed) {
     console.log("already signed");
     sendRes({ message: "login_success" });
-    return;
+    
+  }
+  else {
+    chrome.identity.launchWebAuthFlow(
+      { url: create_twitch_endpoint(), interactive: true }, (redirect_url) => {
+        if (chrome.runtime.lastError || redirect_url.includes("error=access_denied")) {
+          console.log(chrome.runtime.lastError);
+          sendRes({ message: "fail" });
+          console.log("login fail");
+        } else {
+          let id_token = redirect_url.substring(redirect_url.indexOf("id_token=") + 9);
+          id_token = id_token.substring(0, id_token.indexOf("&"));
+          //console.log("id token: " + id_token)
+          ACCESS_TOKEN = redirect_url.substring(redirect_url.indexOf("access_token=") + 13);
+          ACCESS_TOKEN = ACCESS_TOKEN.substring(0, ACCESS_TOKEN.indexOf("&"));
+          //console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
+
+          user_signed = true;
+          console.log("zalogowano");
+          sendRes({ message: "login_success" });
+        }
+      }
+    )
   }
 
-  chrome.identity.launchWebAuthFlow(
-    { url: create_twitch_endpoint(), interactive: true },
-    (redirect_url) => {
-      if (
-        chrome.runtime.lastError ||
-        redirect_url.includes("error=access_denied")
-      ) {
-        console.log(chrome.runtime.lastError);
-        sendRes({ message: "fail" });
-        console.log("login fail");
-      } else {
-        let id_token = redirect_url.substring(
-          redirect_url.indexOf("id_token=") + 9
-        );
-        id_token = id_token.substring(0, id_token.indexOf("&"));
-        //console.log("id token: " + id_token)
-        ACCESS_TOKEN = redirect_url.substring(
-          redirect_url.indexOf("access_token=") + 13
-        );
-        ACCESS_TOKEN = ACCESS_TOKEN.substring(0, ACCESS_TOKEN.indexOf("&"));
-        //console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
-
-        user_signed = true;
-        console.log("zalogowano");
-        sendRes({ message: "login_success" });
-      }
-    }
-  );
 }
 
 function checkStreams(sendRes) {
@@ -165,9 +167,10 @@ function checkStreams(sendRes) {
     })
       .then((res) => {
         if (res.status !== 200) {
-          console.log("blad");
-          sendRes({ message: "fail" });
-          return;
+          console.log("blad z check streams probably bad access token")
+          
+          sendRes({ message: "fail" })
+          return
         }
         res.json().then((resjson) => {
           console.log("odp od resjson");

@@ -1,7 +1,7 @@
 const CLIENT_ID = encodeURIComponent("nilkx2mp8qu7n709bt8jkx71unc57m");
 const SECRET = encodeURIComponent("6n2cdli9g4do4r3kw91pe519euwmjx");
 const REDIRECT_URI =
-  "https://ahgbjeifinleiaflgpeckjdpleemnchd.chromiumapp.org/";
+  `https://${chrome.runtime.id}.chromiumapp.org/`;
 const RESPONSE_TYPE = encodeURIComponent("token");
 const SCOPE = encodeURIComponent("user:read:email");
 
@@ -14,11 +14,28 @@ function create_twitch_endpoint() {
   console.log(url);
   return url;
 }
+chrome.runtime.onInstalled.addListener(function(details){
+  if(details.reason == "install"){
+      console.log("installed")
+      chrome.alarms.create("myAlarm", {delayInMinutes: 1, periodInMinutes: 1} )
+  }else if(details.reason == "update"){
+      console.log("updated")
+  }
+});
+chrome.alarms.onAlarm.addListener(() => {
+  console.log("jd")
+  //here check if streamers are online
+  //przeniesc logike sprawdzania do backgound alarmu
+  //zapisywac w storagu
+  // w pop upie dodac refresh button i refreshowac po otwarciu popupa
+})
+
+
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === "login") {
-    if (user_signed) sendResponse({message: "already_signed"})
-    else login(sendResponse)
+    login(sendResponse)
+    
 
   } 
   else if (request.message === "add_streamer") {
@@ -31,20 +48,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       addStreamer(userlogin, sendResponse);
     }
   } 
-  else if (request.message === "check_login") {
-    if (user_signed) {
-      sendResponse({ message: { user_logged_in: true } });
-      return;
-    }
-    sendResponse({ message: { user_logged_in: false } });
-  } 
   else if (request.message === "clear") {
     chrome.storage.local.clear();
     console.log("clearing");
     sendResponse({ message: "pogchamp" });
   } 
-  else if (request.message === "check") {
-    checkStreams(sendResponse);
+  else if (request.message === "refresh") {
+    checkStreams(sendResponse)
+    
   } 
   else if (request.message === "delete_streamer") {
     chrome.storage.local.get(["all"], (data) => {
@@ -82,7 +93,7 @@ function addStreamer(userlogin, sendRes) {
         return;
       }
       res.json().then((resjson) => {
-        chrome.storage.local.get(["all"], (data) => {
+          chrome.storage.local.get(["all"], (data) => {
           var allStreamersArray = [];
           if (data["all"]) {
             allStreamersArray = data["all"];
@@ -91,6 +102,8 @@ function addStreamer(userlogin, sendRes) {
               login: resjson.data[0].login,
               display_name: resjson.data[0].display_name,
               image: resjson.data[0].profile_image_url,
+              online: false,
+              stream_data: {}
             });
             chrome.storage.local.set({ all: allStreamersArray });
           } else {
@@ -100,6 +113,8 @@ function addStreamer(userlogin, sendRes) {
                   login: resjson.data[0].login,
                   display_name: resjson.data[0].display_name,
                   image: resjson.data[0].profile_image_url,
+                  online: false,
+                  stream_data: {}        
                 },
               ],
             });
@@ -125,6 +140,7 @@ function login(sendRes) {
       { url: create_twitch_endpoint(), interactive: true }, (redirect_url) => {
         if (chrome.runtime.lastError || redirect_url.includes("error=access_denied")) {
           console.log(chrome.runtime.lastError);
+          console.log(redirect_url);
           sendRes({ message: "fail" });
           console.log("login fail");
         } else {
@@ -133,7 +149,7 @@ function login(sendRes) {
           //console.log("id token: " + id_token)
           ACCESS_TOKEN = redirect_url.substring(redirect_url.indexOf("access_token=") + 13);
           ACCESS_TOKEN = ACCESS_TOKEN.substring(0, ACCESS_TOKEN.indexOf("&"));
-          //console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
+          console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
 
           user_signed = true;
           console.log("zalogowano");
@@ -146,18 +162,21 @@ function login(sendRes) {
 }
 
 function checkStreams(sendRes) {
-  var streams;
+  var streamers;
   var url = "https://api.twitch.tv/helix/streams?";
 
   chrome.storage.local.get(["all"], (data) => {
-    streams = data["all"];
-    console.log(streams);
-    for (let i = 0; i < streams.length; i++) {
-      if (i === streams.length - 1) url += "user_login=" + streams[i].login;
-      else url += "user_login=" + streams[i].login + "&";
+    streamers = data["all"];
+    if(!streamers) {
+      return
     }
+    console.log(streamers);
+    for (let i = 0; i < streamers.length; i++) {
+      if (i === streamers.length - 1) url += "user_login=" + streamers[i].login;
+      else url += "user_login=" + streamers[i].login + "&";
+    }
+    console.log(url)
 
-    console.log(url);
     fetch(url, {
       method: "GET",
       headers: {
@@ -169,14 +188,26 @@ function checkStreams(sendRes) {
         if (res.status !== 200) {
           console.log("blad z check streams probably bad access token")
           
-          sendRes({ message: "fail" })
           return
         }
         res.json().then((resjson) => {
           console.log("odp od resjson");
           console.log(resjson.data);
           if (resjson.data.length > 0) {
-            sendRes({ message: "success", data: resjson.data });
+            console.log("zapis do storage: ")
+            //console.log(resjson.data)
+            online_streams = resjson.data
+            streamers.forEach( streamer => {
+              online_streams.forEach( online_stream => {
+                if(streamer.login === online_stream.user_login){
+                  streamer.stream_data = online_stream
+                  streamer.online = true
+                }
+              })
+            })
+            console.log(streamers)
+            chrome.storage.local.set({ all: streamers });
+            sendRes({message: "res from refresh"})
           }
         });
       })

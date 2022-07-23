@@ -37,37 +37,26 @@
         .loginBtnDisable{
             visibility: hidden;
         }
-        .online{
-            background-color: red;
+
+        .img_offline{
+            filter: grayscale(100%);
+            -webkit-filter: grayscale(100%);
         }
-        .offline{
-            background-color: silver;
-        }
-        .dot{
-            width: 20px;
-            height: 20px;
-            border-radius: 10px;
-            position: absolute;
-            left: 30px;
-            top: 30px;
-        }
+
     </style>
 </head>
 
 <body>
     <div class="title">
-        <p>Log in</p>
+        <p>STREAMERS</p>
     </div>
     
-    <div>
-        <input type="button" value="Zaloguj" id="loginBtn">
-        
-    </div>
+
     <div>
         <input type="text" id="inputStreamerName">
         <input type="button" value="Dodaj" id="addStreamerBtn">
         <input type="button" value="clear" id="clearBtn">
-        <input type="button" value="check" id="checkBtn">
+        <input type="button" value="refresh" id="refreshBtn">
     </div>
 
     <div class="streamers"></div>

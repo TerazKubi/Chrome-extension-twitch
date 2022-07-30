@@ -1,6 +1,6 @@
 //alert("siema")
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+// chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     
-    alert(message)
-});
+//     alert(message)
+// });
 

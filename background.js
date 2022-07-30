@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(function(details){
   }
 });
 chrome.alarms.onAlarm.addListener(() => {
-  console.log("jd")
+  console.log("FROM ALARM")
   //here check if streamers are online
   //przeniesc logike sprawdzania do backgound alarmu
   //zapisywac w storagu
@@ -70,7 +70,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     var allStreamers;
     chrome.storage.local.get(["all"], (data) => {
       allStreamers = data["all"];
-      console.log(allStreamers);
+      //console.log(allStreamers);
       sendResponse({ message: "success", data: allStreamers });
     });
   }
@@ -194,17 +194,47 @@ function checkStreams(sendRes) {
           console.log("odp od resjson");
           console.log(resjson.data);
           if (resjson.data.length > 0) {
-            console.log("zapis do storage: ")
+            //console.log("zapis do storage: ")
             //console.log(resjson.data)
             online_streams = resjson.data
+
             streamers.forEach( streamer => {
-              online_streams.forEach( online_stream => {
-                if(streamer.login === online_stream.user_login){
-                  streamer.stream_data = online_stream
-                  streamer.online = true
-                }
-              })
+              
+              let stream = online_streams.find(stream => stream.user_login === streamer.login)
+              if(stream) {
+                streamer.stream_data = stream
+                streamer.online = true
+              } else {
+                streamer.stream_data = {}
+                streamer.online = false
+              }
             })
+            console.log("tablcia streamers po sprawdzeniu z funkcji checkStreams/refresh")
+            console.log(streamers)
+            //streamers.sort((a, b) => Number(b.online) - Number(a.online))
+
+            // streamers.sort((a, b) => (Number(b.online) - Number(a.online)) ? 1: (a.online && b.online) ?
+            // (( b.stream_data.viewer_count > a.stream_data.viewer_count) ? 1 : -1) : -1 )
+
+            streamers.sort((a,b) => {
+              if ( (Number(b.online) - Number(a.online)) === 1 ) {
+                return 1
+              } else if ( (Number(b.online) - Number(a.online)) === -1 ) {
+                return -1
+              } else {
+                if ( a.online && b.online ){
+                  if ( b.stream_data.viewer_count > a.stream_data.viewer_count ) {
+                    return 1
+                  } else {
+                    return -1
+                  }
+                } else {
+                  return 0
+                }
+              }
+
+            })
+            console.log("tablcia streamers po posortowaniu")
             console.log(streamers)
             chrome.storage.local.set({ all: streamers });
             sendRes({message: "res from refresh"})

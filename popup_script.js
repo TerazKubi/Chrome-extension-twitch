@@ -9,19 +9,12 @@ const title = document.querySelector(".title")
 
 
 
-
-// loginBtn.addEventListener("click", e => {
-//     login()
-// })
-
-//at the start read 
 clearBtn.addEventListener("click", e => {
     console.log("click")
     chrome.runtime.sendMessage({message: "clear"}, (res)=>{
         console.log(res.message)
     })
 })
-
 refreshBtn.addEventListener("click", e => {
     //refresh
     chrome.runtime.sendMessage({message: "refresh"}, (res)=>{

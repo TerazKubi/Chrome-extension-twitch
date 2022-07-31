@@ -62,15 +62,17 @@ function getStreamersFromStorageAndDisplay(){
                     if(s.online) {
                         newStreamerDiv.innerHTML = "<img  src='" + s.image+ "'>"
                         newStreamerDiv.innerHTML += "<div id='name" + s.login + "'>" + s.display_name + " " + s.stream_data.game_name +" " + s.stream_data.viewer_count+ " " + "</div>"    
-                        newStreamerDiv.setAttribute("title", s.stream_data.title)                      
+                        newStreamerDiv.setAttribute("title", s.stream_data.title)    
+                        newStreamerDiv.classList.add("clickable")  
+                        newStreamerDiv.addEventListener("click", (e) => {
+                            if (e.target !== newStreamerDiv) return
+                            const newUrl = "https://www.twitch.tv/" + s.login
+                            chrome.tabs.create({url: newUrl })
+                        })                
                     } else {
                         newStreamerDiv.innerHTML = "<img  class='img_offline' src='" + s.image+ "'><div id='name" + s.login + "'>" + s.display_name + "------- </div>"
                     }
-                    newStreamerDiv.addEventListener("click", (e) => {
-                        if (e.target !== newStreamerDiv) return
-                        const newUrl = "https://www.twitch.tv/" + s.login
-                        chrome.tabs.create({url: newUrl })
-                    })
+                    
                     let delBtn = document.createElement("input")
                     delBtn.setAttribute('type', 'button')
                     delBtn.setAttribute('value', 'usun')

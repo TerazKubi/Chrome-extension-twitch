@@ -23,10 +23,17 @@
         }
         .streamer{
             width: 100%;
-            
-            background-color: silver;
+            font-size: 15px;
+            color: white;
+            background-color: black;
             margin-top: 5px;
             position: relative;
+            box-sizing: border-box;
+            border: 1px solid black;
+        }
+        .streamer:hover {
+            cursor: pointer;
+            border: 1px solid purple;
         }
         .streamer img{
             width: 50px;
@@ -55,7 +62,6 @@
     <div>
         <input type="text" id="inputStreamerName">
         <input type="button" value="Dodaj" id="addStreamerBtn">
-        <input type="button" value="clear" id="clearBtn">
         <input type="button" value="refresh" id="refreshBtn">
     </div>
 

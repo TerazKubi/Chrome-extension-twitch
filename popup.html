@@ -10,65 +10,231 @@
         body {
             width: 450px;
             height: 550px;
+            margin: 0;
+            padding: 0;
 
+            color: white;
+            
+            background-color: #0E0E10;
 
-            color: black;
-            font-size: 20px;
-            background-color: white;
+            position: relative;
         }
-        .streamers{
+        .title-container{
+            width: 100%;
+            height: 80px;
+            box-sizing: border-box;
+            border: 1px solid pink;
+        }
+        .streamers-container{
             max-height: 400px;
             overflow: scroll;
             overflow-x: hidden;
         }
         .streamer{
             width: 100%;
+            height: 80px;
             font-size: 15px;
             color: white;
-            background-color: black;
+            background-color: #1F1F23;
             margin-top: 5px;
             position: relative;
             box-sizing: border-box;
-            border: 1px solid black;
+            border: 1px solid #1F1F23;
+            position:relative;
+        }
+        .streamer-display-name{
+            position: absolute;
+            left: 130px;
+            font-style: 'Inter';
+            font-size: 17px;
+            top: 20px;
+        }
+        .display-name-offline{
+            opacity: 0.7;
+        }
+        .offline-text-container{
+            font-family: 'Inter';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 17px;
+            line-height: 21px;
+            letter-spacing: 0.05em;
+
+            color: rgba(255, 255, 255, 0.2);
+            position:absolute;
+            left: 355px;
+            top: 30px;
+        }
+        .streamer-stream-category{
+            position: absolute;
+            left: 130px;
+            top: 45px;
+            font-size: 15px;
+            font-family: 'Inter';
+            opacity: 0.7;
+
+        }
+        .streamer-viewer-count{
+            position: absolute;
+            left: 355px;
+            top: 40px;
+        }
+        .streamer-live-icon-container{
+            position: absolute;
+            left: 375px;
+            top: 20px;
+            color: #FF0000;
+            font-size: 17px;
+            font-weight: 600;
+        }
+        .streamer-live-dot{
+            position: absolute;
+            left: -20px;
+            top: 5px;
+            background-color: #FF0000;
+            border-radius: 50%;
+            width: 13px;
+            height: 13px;
+        }
+        .streamer img{
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            position: absolute;
+            left: 34px;
+            top: 10px;
+            
+        }
+        .delete-streamer{
+            position: absolute;
+            right:0px;
+            width: 80px;
+            height: 80px;
+            background-color: #A970FF;
+            display: none;
+        }
+        .streamer:hover .delete-streamer{
+            display: inline;
         }
         .clickable:hover {
             cursor: pointer;
-            border: 1px solid purple;
+            border: 1px solid #A970FF;
         }
-        .streamer img{
-            width: 50px;
-            height: 50px;
-            border-radius: 25px;
-            
-        }
+        
 
 
         .img_offline{
             filter: grayscale(100%);
             -webkit-filter: grayscale(100%);
         }
+        .show-add-streamer-container-button{
+            width: 35px;
+            height: 34px;
+            position: absolute;
+            bottom:30px;
+            left: 50%;
+            transform: translate(-50%, 50%);
+            border: 2px solid #A970FF;
+            background: none;
+            border-radius: 50%;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .add-streamer-container{
+            width: 310px;
+            height: 160px;
+            background-color: #FFFFFF;
+            border-radius: 5px;
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: none;
+        }
+        .add-streamer-container input[type=text] {
+            background-color: #D9D9D9;
+            width: 270px;
+            height: 35px;
+            position: absolute;
+            top:20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: none;
+            border-radius: 10px;
+            padding-left: 10px;
+
+        }
+        .add-streamer-container input[type=text]::placeholder{
+            font-family: 'Inter';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 17px;
+            text-align: center;
+
+            color: #000000;
+
+            opacity: 0.5;
+        }
+        .add-streamer-container button {
+            background-color: #A970FF;
+            width: 135px;
+            height: 35px;
+            color: white;
+            font-family: 'Inter';
+            font-size: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            position: absolute;
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+        }
+        .hide-add-streamer-container{
+            background-color: #A970FF;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            position: absolute;
+            left:50%;
+            transform: translate(-50%, 50%);
+            bottom: 0px;
+            cursor: pointer;
+        }
 
     </style>
 </head>
 
 <body>
-    <div class="title">
+    <div class="title-container">
         <p>STREAMERS</p>
     </div>
     
-
+    <!--
     <div>
-        <input type="text" id="inputStreamerName">
-        <input type="button" value="Dodaj" id="addStreamerBtn">
+        
         <input type="button" value="refresh" id="refreshBtn">
     </div>
+    -->
 
-    <div class="streamers"></div>
+    <div class="streamers-container"></div>
 
     <div class="output">TMP OUTPUT</div>
+
+    <div class="show-add-streamer-container-button" id="showAddStreamerContainer"></div>
+
+    <div class="add-streamer-container">
+        <input type="text" id="inputStreamerName" placeholder="Podaj login streamera">
+        <button id="addStreamerBtn">Dodaj</button>
+        <div class="hide-add-streamer-container" id="hideAddStreamerContainer"></div>
+    </div>
 
     <script src="./popup_script.js"></script>
     
 </body>
 
 </html>
+

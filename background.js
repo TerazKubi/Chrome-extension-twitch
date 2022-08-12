@@ -5,8 +5,9 @@ const REDIRECT_URI =
 const RESPONSE_TYPE = encodeURIComponent("token");
 const SCOPE = encodeURIComponent("user:read:email");
 
-let user_signed = false;
-let ACCESS_TOKEN = null;
+let user_signed = false
+let ACCESS_TOKEN = null
+let isLoginPopupActive = false
 
 function create_twitch_endpoint() {
   let url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
@@ -110,8 +111,9 @@ async function refresh(sendRes) {
   sendRes({message: "refreshSuccess"})
 }
 async function hearthBeat() {
-  await login()
-  await checkStreams()
+  if (!isLoginPopupActive) await login()
+  if (user_signed) await checkStreams()
+  await checkIfAnyOnlineStreamsAndSetIcon()
 }
 function addStreamer(userlogin, sendRes) {
   fetch(`https://api.twitch.tv/helix/users?login=${userlogin}`, {
@@ -172,6 +174,8 @@ function login() {
       resolve()
     }
     else {
+      isLoginPopupActive = true
+      //make sure that your browser has enabled cookies
       chrome.identity.launchWebAuthFlow(
         { url: create_twitch_endpoint(), interactive: true }, (redirect_url) => {
           if (chrome.runtime.lastError || redirect_url.includes("error=access_denied")) {
@@ -189,6 +193,7 @@ function login() {
             console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
   
             user_signed = true;
+            isLoginPopupActive = false
             console.log("zalogowano");
             //sendRes({ message: "login_success" });
             resolve()
@@ -209,6 +214,29 @@ async function loginListener(sendRes) {
   }
   sendRes({message: "loginSuccess"})
 }
+
+function checkIfAnyOnlineStreamsAndSetIcon() {
+  return new Promise((resolve, reject) => {
+    chrome.storage.local.get(["all"], (data) => {
+      // TO DO ================================================================================
+      streamers = data['all']
+      let isAnyStreamOnline = false
+      streamers.forEach(stream => {
+        if (stream.online) isAnyStreamOnline = true
+      
+      })
+
+      if (isAnyStreamOnline) {
+        console.log("jest ktos online zmiana icony")
+        chrome.action.setIcon({ path: "/images/sample-icon.png" })
+      } else {
+        console.log("nikt nie jest ktos online zmiana icony")
+        chrome.action.setIcon({ path: "/images/icon-16x16.png" })
+      }
+    })
+  })
+}
+
 function checkStreams() {
   var streamers;
   var url = "https://api.twitch.tv/helix/streams?";
@@ -284,6 +312,9 @@ function checkStreams() {
               console.log(streamers)
               chrome.storage.local.set({ all: streamers });
               //sendRes({message: "res from refresh"})
+              resolve()
+            } else {
+              //when resjson is empty
               resolve()
             }
           });

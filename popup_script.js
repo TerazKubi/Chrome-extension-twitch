@@ -1,20 +1,29 @@
 const addStreamerBtn = document.querySelector("#addStreamerBtn")
 const refreshBtn = document.querySelector("#refreshBtn")
 const streamerNameInput = document.querySelector("#inputStreamerName")
-const streamersDiv = document.querySelector(".streamers")
+const streamersDiv = document.querySelector(".streamers-container")
 const output = document.querySelector(".output")
-const title = document.querySelector(".title")
+const title = document.querySelector(".title-container")
+const hideBtn = document.querySelector("#hideAddStreamerContainer")
+const showBtn = document.querySelector("#showAddStreamerContainer")
 
+const addStreamerContainer = document.querySelector(".add-streamer-container")
 
 
 // event listeners
-refreshBtn.addEventListener("click", e => {
-    refresh()
-})
+
+// refreshBtn.addEventListener("click", e => {
+//     refresh()
+// })
 addStreamerBtn.addEventListener("click", (e)=>{
     addStreamer()   
 })
-
+hideBtn.addEventListener("click", (e) => {
+    addStreamerContainer.style.display = "none"
+})
+showBtn.addEventListener("click", (e) => {
+    addStreamerContainer.style.display = "inline"
+})
 
 //at the start when user open pop up window
 start()
@@ -61,7 +70,13 @@ function getStreamersFromStorageAndDisplay(){
                     newStreamerDiv.classList.add("streamer")
                     if(s.online) {
                         newStreamerDiv.innerHTML = "<img  src='" + s.image+ "'>"
-                        newStreamerDiv.innerHTML += "<div id='name" + s.login + "'>" + s.display_name + " " + s.stream_data.game_name +" " + s.stream_data.viewer_count+ " " + "</div>"    
+                        newStreamerDiv.innerHTML += 
+                        "<div id='name" + s.login + "'>" + 
+                            "<div class='streamer-display-name'>" + s.display_name + "</div>" +  
+                            "<div class='streamer-stream-category'>" + s.stream_data.game_name + "</div>" +
+                            "<div class='streamer-live-icon-container'><div class='streamer-live-dot'></div>LIVE</div>"+
+                            "<div class='streamer-viewer-count'>" + s.stream_data.viewer_count + "</div>" +
+                         "</div>"    
                         newStreamerDiv.setAttribute("title", s.stream_data.title)    
                         newStreamerDiv.classList.add("clickable")  
                         newStreamerDiv.addEventListener("click", (e) => {
@@ -70,12 +85,15 @@ function getStreamersFromStorageAndDisplay(){
                             chrome.tabs.create({url: newUrl })
                         })                
                     } else {
-                        newStreamerDiv.innerHTML = "<img  class='img_offline' src='" + s.image+ "'><div id='name" + s.login + "'>" + s.display_name + "------- </div>"
-                    }
-                    
-                    let delBtn = document.createElement("input")
-                    delBtn.setAttribute('type', 'button')
-                    delBtn.setAttribute('value', 'usun')
+                        newStreamerDiv.innerHTML = "<img  class='img_offline' src='" + s.image+ "'>"
+                        newStreamerDiv.innerHTML += 
+                        "<div id='name" + s.login + "'>" + 
+                            "<div class='streamer-display-name display-name-offline'>" + s.display_name + "</div>" +  
+                            "<div class='offline-text-container'>Offline</div>" +                          
+                         "</div>"                   
+                    }                   
+                    let delBtn = document.createElement("div")
+                    delBtn.classList.add("delete-streamer")
                     delBtn.addEventListener("click", (e)=>{
                         delStreamer(s.login)
                     })

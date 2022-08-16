@@ -23,6 +23,7 @@ hideBtn.addEventListener("click", (e) => {
 })
 showBtn.addEventListener("click", (e) => {
     addStreamerContainer.style.display = "inline"
+    streamerNameInput.focus()
 })
 
 //at the start when user open pop up window

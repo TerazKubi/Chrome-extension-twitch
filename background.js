@@ -111,9 +111,14 @@ async function refresh(sendRes) {
   sendRes({message: "refreshSuccess"})
 }
 async function hearthBeat() {
-  if (!isLoginPopupActive) await login()
-  if (user_signed) await checkStreams()
-  await checkIfAnyOnlineStreamsAndSetIcon()
+  try {
+    if (!isLoginPopupActive) await login()
+    if (user_signed) await checkStreams()
+    await checkIfAnyOnlineStreamsAndSetIcon()
+  } catch (error) {
+    console.log(error)
+  }
+  
 }
 function addStreamer(userlogin, sendRes) {
   fetch(`https://api.twitch.tv/helix/users?login=${userlogin}`, {

@@ -29,6 +29,32 @@
             max-height: 400px;
             overflow: scroll;
             overflow-x: hidden;
+
+        }
+        .streamers-container :not(:first-child){
+            margin-top: 10px;
+        }
+        /* width */
+        .streamers-container::-webkit-scrollbar {
+        width: 8px;
+        height: 30px;
+        }
+
+        /* Track */
+        .streamers-container::-webkit-scrollbar-track {
+        
+            background: none;
+        }
+        
+        /* Handle */
+        .streamers-container::-webkit-scrollbar-thumb {
+        background: red; 
+        border-radius: 4px;
+        }
+
+        /* Handle on hover */
+        .streamers-container::-webkit-scrollbar-thumb:hover {
+        background: #b30000; 
         }
         .streamer{
             width: 100%;
@@ -36,7 +62,7 @@
             font-size: 15px;
             color: white;
             background-color: #1F1F23;
-            margin-top: 5px;
+            /*margin-top: 10px;*/
             position: relative;
             box-sizing: border-box;
             border: 1px solid #1F1F23;
@@ -107,14 +133,22 @@
         }
         .delete-streamer{
             position: absolute;
+            top: 0px;
             right:0px;
             width: 80px;
             height: 80px;
             background-color: #A970FF;
             display: none;
+            box-sizing: border-box;
+            cursor: pointer;
+            transform: translate(100%, -10px);
+            animation: slide-in 0.3s forwards;
         }
         .streamer:hover .delete-streamer{
             display: inline;
+        }
+        @keyframes slide-in {
+            100% { transform: translate(0%, -10px); }
         }
         .clickable:hover {
             cursor: pointer;

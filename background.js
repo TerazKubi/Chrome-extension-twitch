@@ -1,19 +1,3 @@
-const CLIENT_ID = encodeURIComponent("nilkx2mp8qu7n709bt8jkx71unc57m");
-const SECRET = encodeURIComponent("6n2cdli9g4do4r3kw91pe519euwmjx");
-const REDIRECT_URI =
-  `https://${chrome.runtime.id}.chromiumapp.org/`;
-const RESPONSE_TYPE = encodeURIComponent("token");
-const SCOPE = encodeURIComponent("user:read:email");
-
-let user_signed = false
-let ACCESS_TOKEN = null
-let isLoginPopupActive = false
-
-function create_twitch_endpoint() {
-  let url = `https://id.twitch.tv/oauth2/authorize?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}&scope=${SCOPE}`;
-  //console.log(url);
-  return url;
-}
 chrome.runtime.onInstalled.addListener(function(details){
   if(details.reason == "install"){
     console.log("installed")
@@ -23,10 +7,12 @@ chrome.runtime.onInstalled.addListener(function(details){
     chrome.alarms.create("myAlarm", {delayInMinutes: 1, periodInMinutes: 1} )
     console.log("updated")
   }
-});
+})
+
 chrome.alarms.onAlarm.addListener((alarm) => {
   console.log("FROM ALARM")
   hearthBeat()
+
   //here check if streamers are online
   //przeniesc logike sprawdzania do backgound alarmu
   //zapisywac w storagu
@@ -41,23 +27,13 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 })
 
 
-
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.message === "login") {
 
-    loginListener(sendResponse)
+  if (request.message === "addStreamer") {
+
+    let userlogin = request.streamer;    
+    addStreamer(userlogin, sendResponse);
     
-  } 
-  else if (request.message === "addStreamer") {
-
-    let userlogin = request.streamer;
-    if (user_signed) {
-      addStreamer(userlogin, sendResponse);
-    } else {
-      console.log("not logged in");
-      login(sendResponse);
-      addStreamer(userlogin, sendResponse);
-    }
 
   } 
   else if (request.message === "deleteStreamer") {
@@ -98,7 +74,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function getAllStreamers(sendRes) {
 
-  //await checkStreams()
   chrome.storage.local.get(["all"], (data) => {
     let allStreamers = data["all"]
     //console.log(allStreamers);
@@ -112,21 +87,15 @@ async function refresh(sendRes) {
 }
 async function hearthBeat() {
   try {
-    if (!isLoginPopupActive) await login()
-    if (user_signed) await checkStreams()
-    await checkIfAnyOnlineStreamsAndSetIcon()
+    await checkStreams()
   } catch (error) {
     console.log(error)
   }
   
 }
 function addStreamer(userlogin, sendRes) {
-  fetch(`https://api.twitch.tv/helix/users?login=${userlogin}`, {
-    method: "GET",
-    headers: {
-      Authorization: "Bearer " + ACCESS_TOKEN,
-      "Client-Id": CLIENT_ID,
-    },
+  fetch(`https://chrome-extension-twitch.herokuapp.com/streamers/streamer?login=${userlogin}`, {
+    method: "GET"
   })
     .then((res) => {
       if (res.status !== 200) {
@@ -135,26 +104,42 @@ function addStreamer(userlogin, sendRes) {
         return;
       }
       res.json().then((resjson) => {
-          chrome.storage.local.get(["all"], (data) => {
-          var allStreamersArray = [];
-          if (data["all"]) {
-            allStreamersArray = data["all"];
-            //console.log(allStreamersArray)
+        
+        if(!resjson.length){
+          sendRes({message: "noStreamerWithGivenLogin"})
+          return
+        } 
+        chrome.storage.local.get(["all"], (data) => {         
+          var allStreamersArray = data["all"];
+          //console.log(resjson)
+          // jesli ktos juz byl dodany
+          if (allStreamersArray) {         
+            //sprawdzenie duplikatu // czy ktos o takim loginie zostal juz dodany
+            var isAlreadyIn = allStreamersArray.find( s => s.login === resjson[0].login)
+            //console.log(isAlreadyIn)
+            if(typeof isAlreadyIn !== "undefined") {
+              console.log("user already added")
+              sendRes({message: "userAlreadyAdded", uLogin: resjson[0].login})
+              return
+            }
+
             allStreamersArray.push({
-              login: resjson.data[0].login,
-              display_name: resjson.data[0].display_name,
-              image: resjson.data[0].profile_image_url,
+              login: resjson[0].login,
+              display_name: resjson[0].display_name,
+              image: resjson[0].profile_image_url,
               online: false,
               stream_data: {}
             });
             chrome.storage.local.set({ all: allStreamersArray });
-          } else {
+          } 
+          // jesli nikt jeszcze nie byl dodany //pierwsze odpalenie zaraz po zainstalowaniu gdzie w local storage nie ma nic wprowadzone
+          else {
             chrome.storage.local.set({
               all: [
                 {
-                  login: resjson.data[0].login,
-                  display_name: resjson.data[0].display_name,
-                  image: resjson.data[0].profile_image_url,
+                  login: resjson[0].login,
+                  display_name: resjson[0].display_name,
+                  image: resjson[0].profile_image_url,
                   online: false,
                   stream_data: {}        
                 },
@@ -166,119 +151,61 @@ function addStreamer(userlogin, sendRes) {
       });
     })
     .catch((err) => {
-      console.log(err);
+      //console.log(err);
+      sendRes({message: "fail"})
     });
 
-  //checkStreams(sendRes)
-}
-function login() {
-  return new Promise((resolve, reject) => {
-    if (user_signed) {
-      console.log("already signed");
-      //sendRes({ message: "login_success" });
-      resolve()
-    }
-    else {
-      isLoginPopupActive = true
-      //make sure that your browser has enabled cookies
-      chrome.identity.launchWebAuthFlow(
-        { url: create_twitch_endpoint(), interactive: true }, (redirect_url) => {
-          if (chrome.runtime.lastError || redirect_url.includes("error=access_denied")) {
-            console.log(chrome.runtime.lastError);
-            //console.log(redirect_url);
-            //sendRes({ message: "fail" });
-            reject()
-            console.log("login fail");
-          } else {
-            let id_token = redirect_url.substring(redirect_url.indexOf("id_token=") + 9);
-            id_token = id_token.substring(0, id_token.indexOf("&"));
-            //console.log("id token: " + id_token)
-            ACCESS_TOKEN = redirect_url.substring(redirect_url.indexOf("access_token=") + 13);
-            ACCESS_TOKEN = ACCESS_TOKEN.substring(0, ACCESS_TOKEN.indexOf("&"));
-            console.log("ACCESS TOKEN: " + ACCESS_TOKEN)
   
-            user_signed = true;
-            isLoginPopupActive = false
-            console.log("zalogowano");
-            //sendRes({ message: "login_success" });
-            resolve()
-          }
-        }
-      )
-    }
+}
+
+function checkIfAnyOnlineStreamsAndSetIcon(streamers) {
+  
+  let isAnyStreamOnline = false
+  streamers.forEach(stream => {
+    if (stream.online) isAnyStreamOnline = true     
   })
-  
 
-}
-
-async function loginListener(sendRes) {
-  try {
-    await login()   
-  } catch (error) {
-    sendRes({message: "loginFail"})
+  if (isAnyStreamOnline) {
+    console.log("jest ktos online zmiana icony")
+    chrome.action.setIcon({ path: "/images/sample-icon.png" })
+  } else {
+    console.log("nikt nie jest ktos online zmiana icony")
+    chrome.action.setIcon({ path: "/images/icon-16x16.png" })
   }
-  sendRes({message: "loginSuccess"})
-}
-
-function checkIfAnyOnlineStreamsAndSetIcon() {
-  return new Promise((resolve, reject) => {
-    chrome.storage.local.get(["all"], (data) => {
-      // TO DO ================================================================================
-      streamers = data['all']
-      let isAnyStreamOnline = false
-      streamers.forEach(stream => {
-        if (stream.online) isAnyStreamOnline = true
-      
-      })
-
-      if (isAnyStreamOnline) {
-        console.log("jest ktos online zmiana icony")
-        chrome.action.setIcon({ path: "/images/sample-icon.png" })
-      } else {
-        console.log("nikt nie jest ktos online zmiana icony")
-        chrome.action.setIcon({ path: "/images/icon-16x16.png" })
-      }
-    })
-  })
 }
 
 function checkStreams() {
   var streamers;
-  var url = "https://api.twitch.tv/helix/streams?";
+  var url = "https://chrome-extension-twitch.herokuapp.com/streamers/streams?";
 
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(["all"], (data) => {
       streamers = data["all"];
+      if(!streamers || !streamers.length) return resolve()
       console.log("CHECKING STREAMS ")
-      //console.log(streamers)
-      if(!streamers) {
-        resolve()
-      }
+      console.log(streamers)
+      
   
       for (let i = 0; i < streamers.length; i++) {
-        if (i === streamers.length - 1) url += "user_login=" + streamers[i].login;
-        else url += "user_login=" + streamers[i].login + "&";
+        if (i === streamers.length - 1) url += "login=" + streamers[i].login;
+        else url += "login=" + streamers[i].login + "&";
       }
   
       fetch(url, {
-        method: "GET",
-        headers: {
-          Authorization: "Bearer " + ACCESS_TOKEN,
-          "Client-Id": CLIENT_ID,
-        },
+        method: "GET"
       })
         .then((res) => {
           if (res.status !== 200) {
-            console.log("blad z check streams probably bad access token")
+            console.log("blad z check")
             
-            return
+            return resolve()
           }
           res.json().then((resjson) => {
             //console.log("odp od resjson");
             //console.log(resjson.data);
-            if (resjson.data.length > 0) {
+            if (resjson.length > 0) {
   
-              online_streams = resjson.data
+              online_streams = resjson
   
               streamers.forEach( streamer => {
                 
@@ -315,18 +242,20 @@ function checkStreams() {
               })
               console.log("AFTER CHECKING: ")
               console.log(streamers)
+              checkIfAnyOnlineStreamsAndSetIcon(streamers)
               chrome.storage.local.set({ all: streamers });
               //sendRes({message: "res from refresh"})
               resolve()
             } else {
               //when resjson is empty
+              checkIfAnyOnlineStreamsAndSetIcon(streamers)
               resolve()
             }
           });
         })
         .catch((err) => {
           console.log(err);
-          reject()
+          reject("Failed to fetch. API is down.")
         });
     });
   })

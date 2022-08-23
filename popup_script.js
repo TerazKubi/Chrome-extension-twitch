@@ -3,7 +3,6 @@ const refreshBtn = document.querySelector("#refreshBtn")
 const streamerNameInput = document.querySelector("#inputStreamerName")
 const streamersDiv = document.querySelector(".streamers-container")
 const output = document.querySelector(".output")
-const loginInfo = document.querySelector(".login-info")
 const hideBtn = document.querySelector("#hideAddStreamerContainer")
 const showBtn = document.querySelector("#showAddStreamerContainer")
 
@@ -36,7 +35,10 @@ addStreamerContainer.addEventListener("keypress", e => {
     }
 })
 document.addEventListener("click", e => {
-    if(!addStreamerContainer.contains(e.target) && e.target !== showBtn) addStreamerContainer.style.display = "none"  
+    if(!addStreamerContainer.contains(e.target) && e.target !== showBtn) {
+        addStreamerContainer.style.display = "none"  
+        isAddStreamerContainerActive = false
+    }
 })
 
 
@@ -44,20 +46,7 @@ document.addEventListener("click", e => {
 start()
 
 
-function login(){
-    
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({message: "login"}, (res)=>{
-            //console.log(res)
-            if (res.message === "loginSuccess" || res.message === "already_signed"){
-                loginInfo.innerHTML = "Zalogowano"
-                resolve()               
-            } else {
-                reject()
-            }              
-        })
-    })  
-}
+
 
 function delStreamer(streamerLogin) {
 
@@ -134,20 +123,24 @@ function refresh() {
 function addStreamer() {
     var userInput = streamerNameInput.value
     if (userInput === "") return
+    streamerNameInput.disabled = true
+    streamerNameInput.value = ""
 
     chrome.runtime.sendMessage({message: "addStreamer", streamer: userInput}, (res)=>{
 
         if(res.message === "success") refresh()
-        else output.innerHTML = "error"
-                
+        else if(res.message === "userAlreadyAdded") showInfo(res.uLogin + " jest już dodany")
+        else if(res.message === "noStreamerWithGivenLogin") showInfo("Nie ma takiego streamera")
+        else if(res.message === "fail") showInfo("Błąd serwera")
+        else showInfo("error")
+             
+        streamerNameInput.disabled = false     
+        streamerNameInput.focus()
     })
-    streamerNameInput.value = ""
-    streamerNameInput.focus()
 }
 
 async function start() {
 
-    await login()
     await getStreamersFromStorageAndDisplay()
 
     setInterval(() => {
@@ -155,4 +148,10 @@ async function start() {
         getStreamersFromStorageAndDisplay()
     }, 30000)
 
+}
+function showInfo(txt){
+    output.innerHTML = txt
+    setTimeout(()=>{
+        output.innerHTML = ""
+    },7000)
 }

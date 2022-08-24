@@ -1,5 +1,4 @@
 const addStreamerBtn = document.querySelector("#addStreamerBtn")
-const refreshBtn = document.querySelector("#refreshBtn")
 const streamerNameInput = document.querySelector("#inputStreamerName")
 const streamersDiv = document.querySelector(".streamers-container")
 const output = document.querySelector(".output")
@@ -12,9 +11,7 @@ let isAddStreamerContainerActive = false
 
 // event listeners
 
-// refreshBtn.addEventListener("click", e => {
-//     refresh()
-// })
+
 addStreamerBtn.addEventListener("click", (e)=>{
     addStreamer()   
 })
@@ -71,8 +68,9 @@ function getStreamersFromStorageAndDisplay(){
             streamersDiv.innerHTML = ""
             streamersData.forEach((s) => {
                 const newStreamerDiv = document.createElement("div")
-                newStreamerDiv.setAttribute("id", s.login)                
+                newStreamerDiv.setAttribute("id", s.login)
                 newStreamerDiv.classList.add("streamer")
+                              
                 if(s.online) {
                     newStreamerDiv.innerHTML = "<img  src='" + s.image+ "'>"
                     newStreamerDiv.innerHTML += 
@@ -83,12 +81,16 @@ function getStreamersFromStorageAndDisplay(){
                         "<div class='streamer-viewer-count'>" + s.stream_data.viewer_count + "</div>" +
                         "</div>"    
                     newStreamerDiv.setAttribute("title", s.stream_data.title)    
-                    newStreamerDiv.classList.add("clickable")  
                     newStreamerDiv.addEventListener("click", (e) => {
                         if (e.target !== newStreamerDiv) return
                         const newUrl = "https://www.twitch.tv/" + s.login
                         chrome.tabs.create({url: newUrl })
-                    })                
+                    })              
+                    if (s.login === "xayoo_") {
+                        newStreamerDiv.classList.add("golden-user")
+                    } else {
+                        newStreamerDiv.classList.add("clickable")
+                    }
                 } else {
                     newStreamerDiv.innerHTML = "<img  class='img_offline' src='" + s.image+ "'>"
                     newStreamerDiv.innerHTML += 
@@ -140,13 +142,14 @@ function addStreamer() {
 }
 
 async function start() {
-
-    await getStreamersFromStorageAndDisplay()
+    console.log("start")
+    //await getStreamersFromStorageAndDisplay()
+    refresh()
 
     setInterval(() => {
         console.log("auto refresh")
         getStreamersFromStorageAndDisplay()
-    }, 30000)
+    }, 10000)
 
 }
 function showInfo(txt){
@@ -154,4 +157,14 @@ function showInfo(txt){
     setTimeout(()=>{
         output.innerHTML = ""
     },7000)
+}
+
+function notifi() {
+    chrome.runtime.sendMessage({message: "notify"}, (res)=>{
+
+        
+    })
+}
+async function reloadBackGround() {
+    
 }

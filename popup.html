@@ -18,6 +18,22 @@
             background-color: #0E0E10;
 
             position: relative;
+            
+        }
+        .golden-user{
+            border: 1px solid #ffd9002a;
+        }
+        .golden-user:hover {
+            border: 1px solid #A970FF;
+            cursor: pointer;
+        }
+
+        .clickable {
+            border: 1px solid #1F1F23;
+        }
+        .clickable:hover {
+            cursor: pointer;
+            border: 1px solid #A970FF;
         }
         .title-container{
             width: 100%;
@@ -36,45 +52,51 @@
 
         .streamers-container{
             max-height: 400px;
-            overflow: scroll;
+            min-height: 400px;
+            overflow-y: scroll;
             overflow-x: hidden;
+            margin: 0;
+            padding: 0;
 
         }
-        .streamers-container :not(:first-child){
-            margin-top: 10px;
+        .streamers-container :first-child {
+            margin-top: 0px;
         }
+        /* ============== scrollbar ==============*/
         /* width */
         .streamers-container::-webkit-scrollbar {
         width: 8px;
         height: 30px;
         }
-
         /* Track */
-        .streamers-container::-webkit-scrollbar-track {
-        
+        .streamers-container::-webkit-scrollbar-track {       
             background: none;
-        }
-        
+        }       
         /* Handle */
         .streamers-container::-webkit-scrollbar-thumb {
         background: red; 
         border-radius: 4px;
         }
-
         /* Handle on hover */
         .streamers-container::-webkit-scrollbar-thumb:hover {
         background: #b30000; 
         }
+        /* ============== ======= ==============*/
+
         .streamer{
-            width: 100%;
+            width: 434px;
             height: 80px;
             font-size: 15px;
             color: white;
             background-color: #1F1F23;
             margin-left: 8px;
+            margin-right: 8px;
+
+            margin-top: 10px;
+
             position: relative;
             box-sizing: border-box;
-            border: 1px solid #1F1F23;
+            /* border: 1px solid #1F1F23; */
             position:relative;
         }
         .streamer-display-name{
@@ -103,7 +125,7 @@
         .streamer-stream-category{
             position: absolute;
             left: 130px;
-            top: 35px;
+            top: 40px;
             font-size: 15px;
             font-family: 'Inter';
             opacity: 0.7;
@@ -145,12 +167,13 @@
             top: 0px;
             right:0px;
             width: 80px;
-            height: 80px;
+            height: 79px;
             background-color: #A970FF;
+            border: 1px solid #A970FF;
             display: none;
             box-sizing: border-box;
             cursor: pointer;
-            transform: translate(100%, -10px);
+            transform: translate(80px, 0px);
             animation: slide-in 0.3s forwards;
         }
         .delete-streamer img{
@@ -165,12 +188,9 @@
             display: inline;
         }
         @keyframes slide-in {
-            100% { transform: translate(0%, -10px); }
+            100% { transform: translate(0px, 0px); }
         }
-        .clickable:hover {
-            cursor: pointer;
-            border: 1px solid #A970FF;
-        }
+        
         
 
 
@@ -309,12 +329,9 @@
         
     </div>
     
-    <!--
-    <div>
-        
-        <input type="button" value="refresh" id="refreshBtn">
-    </div>
-    -->
+    
+    
+   
 
     <div class="streamers-container"></div>
 

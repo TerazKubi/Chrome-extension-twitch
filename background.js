@@ -30,10 +30,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
   } else if (request.message === "getAllStreamers") {
     getAllStreamers(sendResponse);
-  } else if (request.message === "clear") {
-    chrome.storage.local.clear();
-    console.log("clearing");
-    sendResponse({ message: "pogchamp" });
   } else if (request.message === "refresh") {
     refresh(sendResponse);
   } else if (request.message === "notify") {
@@ -46,6 +42,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function getAllStreamers(sendRes) {
   chrome.storage.local.get(["all"], (data) => {
     let allStreamers = data["all"];
+    console.log(allStreamers)
+    
+    if(!allStreamers) return sendRes({message: "noData"})
     sendRes({ message: "success", data: allStreamers });
   });
 }
@@ -132,9 +131,9 @@ function checkIfAnyOnlineStreamsAndSetIcon(streamers) {
   });
 
   if (isAnyStreamOnline) {
-    chrome.action.setIcon({ path: "/images/sample-icon.png" });
+    chrome.action.setIcon({ path: "/images/alertczerwony.png" });
   } else {
-    chrome.action.setIcon({ path: "/images/icon-16x16.png" });
+    chrome.action.setIcon({ path: "/images/16white.png" });
   }
 }
 
@@ -213,9 +212,10 @@ function checkStreams() {
 function notifiy(streamerLogin) {
   chrome.notifications.create("streamer-online-" + streamerLogin, {
     type: "basic",
-    iconUrl: "images/icon-16x16.png",
+    iconUrl: "images/128white.png",
     title: "Title placeholder",
     message: streamerLogin + " jest online!",
+    contextMessage: "Kliknij na powiadomienie aby włączyć live'a.",
     priority: 2,
   });
   chrome.notifications.onClicked.addListener((id) => {

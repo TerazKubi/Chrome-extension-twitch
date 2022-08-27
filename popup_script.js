@@ -61,8 +61,11 @@ function getStreamersFromStorageAndDisplay(){
         chrome.runtime.sendMessage({message: "getAllStreamers"}, (res)=>{
             console.log("loading data from storage and displaying it")
                    
+            console.log(res)
+            if(res.message === "noData") return reject()
             let streamersData = res.data
-            if (!streamersData) reject()
+            console.log(streamersData)
+            if (!streamersData) return reject()
 
             console.log(streamersData)
             streamersDiv.innerHTML = ""
@@ -118,7 +121,12 @@ function getStreamersFromStorageAndDisplay(){
 function refresh() {
     chrome.runtime.sendMessage({message: "refresh"}, (res)=>{
         if (res.message === "refreshSuccess") {
-            getStreamersFromStorageAndDisplay()
+            try {
+                
+                getStreamersFromStorageAndDisplay()
+            } catch (error) {
+                console.log(error)
+            }
         }
     })
 }
@@ -148,7 +156,12 @@ async function start() {
 
     setInterval(() => {
         console.log("auto refresh")
-        getStreamersFromStorageAndDisplay()
+        try {
+            
+            getStreamersFromStorageAndDisplay()
+        } catch (error) {
+            console.log(error)
+        }
     }, 10000)
 
 }

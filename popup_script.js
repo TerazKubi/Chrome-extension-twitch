@@ -2,8 +2,10 @@ const addStreamerBtn = document.querySelector("#addStreamerBtn")
 const streamerNameInput = document.querySelector("#inputStreamerName")
 const streamersDiv = document.querySelector(".streamers-container")
 const output = document.querySelector(".output")
+const addStreamerOutput = document.querySelector(".add-streamer-output-container")
 const hideBtn = document.querySelector("#hideAddStreamerContainer")
 const showBtn = document.querySelector("#showAddStreamerContainer")
+const loader = document.querySelector(".loader")
 
 const addStreamerContainer = document.querySelector(".add-streamer-container")
 
@@ -61,53 +63,49 @@ function getStreamersFromStorageAndDisplay(){
         chrome.runtime.sendMessage({message: "getAllStreamers"}, (res)=>{
             console.log("loading data from storage and displaying it")
                    
-            console.log(res)
             if(res.message === "noData") return reject()
             let streamersData = res.data
-            console.log(streamersData)
             if (!streamersData) return reject()
 
-            console.log(streamersData)
             streamersDiv.innerHTML = ""
             streamersData.forEach((s) => {
                 const newStreamerDiv = document.createElement("div")
                 newStreamerDiv.setAttribute("id", s.login)
                 newStreamerDiv.classList.add("streamer")
+
+                let delBtn = document.createElement("div")
+                delBtn.innerHTML = "<img src='./images/trash-2.png'>"
+                delBtn.classList.add("delete-streamer")        
+                delBtn.addEventListener("click", e => {
+                    e.stopPropagation()
+                    delStreamer(s.login)
+                })       
                               
                 if(s.online) {
-                    newStreamerDiv.innerHTML = "<img  src='" + s.image+ "'>"
-                    newStreamerDiv.innerHTML += 
-                    "<div id='name" + s.login + "'>" + 
-                        "<div class='streamer-display-name'>" + s.display_name + "</div>" +  
-                        "<div class='streamer-stream-category'>" + s.stream_data.game_name + "</div>" +
-                        "<div class='streamer-live-icon-container'><div class='streamer-live-dot'></div>LIVE</div>"+
-                        "<div class='streamer-viewer-count'>" + s.stream_data.viewer_count + "</div>" +
-                        "</div>"    
-                    newStreamerDiv.setAttribute("title", s.stream_data.title)    
-                    newStreamerDiv.addEventListener("click", (e) => {
-                        if (e.target !== newStreamerDiv) return
+                    newStreamerDiv.innerHTML = `<img  class='unselectable' src='${s.image}'>                 
+                    <div id='container-${s.login}'>
+                        <div class='streamer-display-name unselectable'>${s.display_name} </div>  
+                        <div class='streamer-stream-category unselectable'>${s.stream_data.game_name}</div>
+                        <div class='streamer-live-icon-container'><div class='streamer-live-dot'></div>LIVE</div>
+                        <div class='streamer-viewer-count unselectable'>${s.stream_data.viewer_count}</div>
+                    </div>`   
+                    newStreamerDiv.setAttribute("title", s.stream_data.title)   
+                    newStreamerDiv.addEventListener("click", (e) => {                  
                         const newUrl = "https://www.twitch.tv/" + s.login
                         chrome.tabs.create({url: newUrl })
-                    })              
-                    if (s.login === "xayoo_") {
-                        newStreamerDiv.classList.add("golden-user")
-                    } else {
-                        newStreamerDiv.classList.add("clickable")
-                    }
+                    }) 
+                                  
+                    if (s.login === "xayoo_") newStreamerDiv.classList.add("golden-user")
+                    else newStreamerDiv.classList.add("clickable")
+                    
                 } else {
                     newStreamerDiv.innerHTML = "<img  class='img_offline' src='" + s.image+ "'>"
                     newStreamerDiv.innerHTML += 
                     "<div id='name" + s.login + "'>" + 
-                        "<div class='streamer-display-name display-name-offline'>" + s.display_name + "</div>" +  
-                        "<div class='offline-text-container'>Offline</div>" +                          
+                        "<div class='streamer-display-name display-name-offline unselectable'>" + s.display_name + "</div>" +  
+                        "<div class='offline-text-container unselectable'>Offline</div>" +                          
                         "</div>"                   
                 }                   
-                let delBtn = document.createElement("div")
-                delBtn.innerHTML = "<img src='./images/trash-2.png'>"
-                delBtn.classList.add("delete-streamer")
-                delBtn.addEventListener("click", (e)=>{
-                    delStreamer(s.login)
-                })
                 newStreamerDiv.appendChild(delBtn)
                 streamersDiv.appendChild(newStreamerDiv)
             })
@@ -135,17 +133,23 @@ function addStreamer() {
     if (userInput === "") return
     streamerNameInput.disabled = true
     streamerNameInput.value = ""
+    loader.style.display = "inline"
 
     chrome.runtime.sendMessage({message: "addStreamer", streamer: userInput}, (res)=>{
 
-        if(res.message === "success") refresh()
-        else if(res.message === "userAlreadyAdded") showInfo(res.uLogin + " jest już dodany")
-        else if(res.message === "noStreamerWithGivenLogin") showInfo("Nie ma takiego streamera")
-        else if(res.message === "fail") showInfo("Błąd serwera")
-        else showInfo("error")
+        if(res.message === "success"){ 
+            refresh()
+            showInfo(addStreamerOutput, "<img src='./images/check.png' >")
+        }
+        else if(res.message === "userAlreadyAdded") showInfo(addStreamerOutput, "<img src='./images/redxmark.png' class='error-icon'>" + res.uLogin + " is already added.")
+        else if(res.message === "noStreamerWithGivenLogin") showInfo(addStreamerOutput, "<img src='./images/redxmark.png' class='error-icon'>" + "No streamer with given login.")
+        else if(res.message === "outOfLimit") showInfo(addStreamerOutput, "<img src='./images/redxmark.png' class='error-icon'>" + "You cant add more than 100 streamers.")
+        else if(res.message === "fail") showInfo(addStreamerOutput, "<img src='./images/redxmark.png' class='error-icon'>" + "Server error.")
+        else showInfo(addStreamerOutput, "<img src='./images/redxmark.png' class='error-icon'>" + "Error.")
              
         streamerNameInput.disabled = false     
         streamerNameInput.focus()
+        //loader.style.display = "none"
     })
 }
 
@@ -162,22 +166,14 @@ async function start() {
         } catch (error) {
             console.log(error)
         }
-    }, 10000)
+    }, 30000)
 
 }
-function showInfo(txt){
+function showInfo(output, txt){
     output.innerHTML = txt
     setTimeout(()=>{
         output.innerHTML = ""
-    },7000)
+    },30000)
 }
 
-function notifi() {
-    chrome.runtime.sendMessage({message: "notify"}, (res)=>{
 
-        
-    })
-}
-async function reloadBackGround() {
-    
-}

@@ -10,8 +10,8 @@
         body {
             width: 450px;
             height: 550px;
-            margin: 0;
-            padding: 0;
+            margin: 0px;
+            padding: 0px;
 
             color: white;
             
@@ -39,58 +39,61 @@
             width: 100%;
             height: 80px;
             box-sizing: border-box;
-            
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .title{
-            font-size: 25px;
-            position: absolute;
-            left: 50%;
-            top: 30px;
-            transform: translateX(-50%);
+            font-size: 25px;            
         }
 
 
         .streamers-container{
-            max-height: 400px;
-            min-height: 400px;
-            overflow-y: scroll;
+            width: 100%;
+            height: 400px;
+            /* min-height: 400px; */
+            overflow-y: overlay;
             overflow-x: hidden;
             margin: 0;
             padding: 0;
+            padding-right: 0px;
 
         }
         .streamers-container :first-child {
             margin-top: 0px;
         }
         /* ============== scrollbar ==============*/
-        /* width */
-        .streamers-container::-webkit-scrollbar {
-        width: 8px;
-        height: 30px;
-        }
-        /* Track */
-        .streamers-container::-webkit-scrollbar-track {       
-            background: none;
-        }       
-        /* Handle */
-        .streamers-container::-webkit-scrollbar-thumb {
-        background: red; 
-        border-radius: 4px;
-        }
+        
         /* Handle on hover */
         .streamers-container::-webkit-scrollbar-thumb:hover {
-        background: #b30000; 
+            background-color: #8f51ec; 
+        } 
+        .streamers-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .streamers-container::-webkit-scrollbar-thumb {
+            background-color: #A970FF;
+            border-radius: 10rem;
+            border: none;
+        }
+        .streamers-container::-webkit-scrollbar-track-piece:start {
+            background: transparent;
+        }
+
+        .streamers-container::-webkit-scrollbar-track-piece:end {
+            background: transparent;
         }
         /* ============== ======= ==============*/
 
         .streamer{
-            width: 434px;
+            /* width: 434px; */
+            width: 100%;
             height: 80px;
             font-size: 15px;
             color: white;
             background-color: #1F1F23;
-            margin-left: 8px;
-            margin-right: 8px;
+            /* margin-left: 8px;
+            margin-right: 8px; */
 
             margin-top: 10px;
 
@@ -313,20 +316,60 @@
             
             transform:  translate(-50%, -50%) rotate(-45deg);
         }
+
+        .add-streamer-output-container{
+            width: 100%;
+            height: 20px;
+            
+            position: absolute;
+            bottom: 25px;
+            left: 0px;
+            display: flex;
+            justify-content: center;
+            color: red;
+        }
+        .add-streamer-output-container img{
+            width: 16px;
+            height: 16px;
+            /* margin-right: 4px; */
+        }
+        .error-icon {
+            margin-right: 4px;
+        }
         .output{
             position: absolute;
             bottom: 5px;
             left: 5px;
         }
+        .unselectable {
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: -moz-none;
+            -o-user-select: none;
+            user-select: none;
+        }
+        .loader{
+            width: 16px;
+            height: 16px;
+            border-top: 2px solid #A970FF;
+            background: none;
+            animation: spinner 4s linear infinite;
+            border-radius: 50%;
+            display: none;
+        }
         
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 
 <body>
     <div class="title-container">
-        <div class="title">TITLE placeholder</div>
+        <div class="title">Twitch online streamers</div>
 
-        
+        <div class="settings-button"></div>
     </div>
     
     
@@ -340,8 +383,15 @@
     <div class="show-add-streamer-container-button" id="showAddStreamerContainer"></div>
 
     <div class="add-streamer-container">
-        <input type="text" id="inputStreamerName" placeholder="Podaj login streamera">
-        <button id="addStreamerBtn">Dodaj</button>
+        <input type="text" id="inputStreamerName" placeholder="Streamer name">
+        <button id="addStreamerBtn">Add</button>
+        <div class="add-streamer-output-container">
+            
+                <div class="loader"></div>
+            
+        </div>
+        
+        
         <div class="hide-add-streamer-container" id="hideAddStreamerContainer"></div>
     </div>
 

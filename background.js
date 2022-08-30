@@ -32,9 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     getAllStreamers(sendResponse);
   } else if (request.message === "refresh") {
     refresh(sendResponse);
-  } else if (request.message === "notify") {
-    notifi();
-  }
+  } 
 
   return true;
 });
@@ -44,13 +42,18 @@ async function getAllStreamers(sendRes) {
     let allStreamers = data["all"];
     console.log(allStreamers)
     
+    
     if(!allStreamers) return sendRes({message: "noData"})
     sendRes({ message: "success", data: allStreamers });
   });
 }
 async function refresh(sendRes) {
-  await checkStreams();
-  sendRes({ message: "refreshSuccess" });
+  try {
+    await checkStreams();   
+    sendRes({ message: "refreshSuccess" });
+  } catch (error) {
+    console.log(error)
+  }
 }
 async function hearthBeat() {
   try {
@@ -81,6 +84,8 @@ function addStreamer(userlogin, sendRes) {
           var allStreamersArray = data["all"];
           // jesli ktos juz byl dodany
           if (allStreamersArray) {
+            //czy wiecej niz 100
+            if(allStreamersArray.length >= 100) return sendRes({message: "outOfLimit"})
             //sprawdzenie duplikatu // czy ktos o takim loginie zostal juz dodany
             var isAlreadyIn = allStreamersArray.find(
               (s) => s.login === resjson[0].login
@@ -115,7 +120,7 @@ function addStreamer(userlogin, sendRes) {
               ],
             });
           }
-          sendRes({ message: "success" });
+          sendRes({ message: "success" , uLogin: resjson[0].login,});
         });
       });
     })
@@ -214,8 +219,8 @@ function notifiy(streamerLogin) {
     type: "basic",
     iconUrl: "images/128white.png",
     title: "Title placeholder",
-    message: streamerLogin + " jest online!",
-    contextMessage: "Kliknij na powiadomienie aby włączyć live'a.",
+    message: streamerLogin + " is online!",
+    contextMessage: "Click on this notification to watch stream.",
     priority: 2,
   });
   chrome.notifications.onClicked.addListener((id) => {

@@ -1,6 +1,6 @@
 {
-    "name": "Your online twitch users MV3",
-    "description": "Check if your fav streamer is online",
+    "name": "Online Twitch Streamers",
+    "description": "Check if your favourite twitch streamers are online.",
     "version": "0.1.0",
     "manifest_version": 3,
     "icons": {
@@ -23,21 +23,11 @@
     },
     "options_page": "./options.html",
     "permissions": [
-        "activeTab",
         "tabs",
         "storage",
-        "scripting",
-        "identity",
         "alarms",
         "notifications"
-
-    ],
-    "content_scripts": [{
-        "matches": ["<all_urls>"],
-        "js": ["foreground.js"],
-        "run_at": "document_end"
-    }
-    ],
+    ],    
     "host_permissions": [
         "<all_urls>"
     ]

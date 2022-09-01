@@ -57,6 +57,7 @@
             margin: 0;
             padding: 0;
             padding-right: 0px;
+            position: absolute;
 
         }
         .streamers-container :first-child {
@@ -362,21 +363,88 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        .prewiev-stream {
+            width: 200px;
+            height: 200px;
+            position: fixed;
+            visibility: hidden;
+            background-color: red;
+            z-index: 10;
+            animation: 1s show;
+            animation-fill-mode: forwards;
+        }
+        .prewiev-stream img{
+            width: 200px;
+            height: 200px;
+            border-radius: 0%;
+            position: absolute;
+            top: 0px;
+            left: 0px;
+        }
+        @keyframes show {
+            99% {
+                visibility: hidden;
+            }
+            100% {
+                visibility: visible;
+            }
+        }
+        .bell-container {
+            width: 24px;
+            height: 24px;
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            
+        }
+        .bell-container  img {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+        .line {
+            position: absolute;
+            display: none;
+            background-color: red;
+            top: 50%;
+            left: 50%;
+            height: 30px;
+            width: 2px;
+            cursor: pointer;
+            transform:  translate(-50%, -50%) rotate(45deg);
+        }
+
+        .tutorial {
+            color: white;
+            opacity: 0.6;
+            font-size: 15px;
+            position: absolute;
+            left: 50%;
+            top: 30px;
+            transform: translateX(-50%);
+        }
+        
     </style>
 </head>
 
 <body>
     <div class="title-container">
-        <div class="title">Twitch online streamers</div>
+        <div class="title unselectable">Twitch Online Streamers</div>
 
-        <div class="settings-button"></div>
+        <div class="bell-container ">
+            <img id="bell" src="./images/bell.ico">
+            <div class="line"></div>
+        </div>
     </div>
     
     
     
    
 
-    <div class="streamers-container"></div>
+    <div class="streamers-container">
+        
+    </div>
 
     
 

@@ -1,9 +1,12 @@
 chrome.runtime.onInstalled.addListener(function (details) {
   if (details.reason == "install") {
     console.log("installed");
+    chrome.storage.local.set({ notifications: true });
+    chrome.storage.local.set({ all: [] });
     chrome.alarms.create("myAlarm", { delayInMinutes: 1, periodInMinutes: 1 });
   } else if (details.reason == "update") {
     chrome.alarms.clearAll();
+    chrome.storage.local.set({ notifications: true });
     chrome.alarms.create("myAlarm", { delayInMinutes: 1, periodInMinutes: 1 });
     console.log("updated");
   }
@@ -25,15 +28,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         (elem) => elem.login !== request.streamerLogin
       );
       chrome.storage.local.set({ all: newArray });
+      checkForOnlineSetIcon(newArray)
       sendResponse({ message: "delete_success" });
-      console.log("Deleting succed");
+      
     });
   } else if (request.message === "getAllStreamers") {
     getAllStreamers(sendResponse);
   } else if (request.message === "refresh") {
     refresh(sendResponse);
-  } 
-
+  } else if (request.message === "notificationsOff") {
+    notificationsActiveSwap({type: "off"})
+  } else if (request.message === "notificationsOn") {
+    notificationsActiveSwap({type: "on"})
+  } else if (request.message === "getNotificationSetting") {
+    chrome.storage.local.get(["notifications"], data => {
+      sendResponse({data: data["notifications"]})
+    })
+  }
   return true;
 });
 
@@ -41,8 +52,7 @@ async function getAllStreamers(sendRes) {
   chrome.storage.local.get(["all"], (data) => {
     let allStreamers = data["all"];
     console.log(allStreamers)
-    
-    
+      
     if(!allStreamers) return sendRes({message: "noData"})
     sendRes({ message: "success", data: allStreamers });
   });
@@ -71,7 +81,7 @@ function addStreamer(userlogin, sendRes) {
   )
     .then((res) => {
       if (res.status !== 200) {
-        console.log("blad");
+        console.log("error");
         sendRes({ message: "fail" });
         return;
       }
@@ -82,54 +92,42 @@ function addStreamer(userlogin, sendRes) {
         }
         chrome.storage.local.get(["all"], (data) => {
           var allStreamersArray = data["all"];
-          // jesli ktos juz byl dodany
-          if (allStreamersArray) {
-            //czy wiecej niz 100
-            if(allStreamersArray.length >= 100) return sendRes({message: "outOfLimit"})
-            //sprawdzenie duplikatu // czy ktos o takim loginie zostal juz dodany
-            var isAlreadyIn = allStreamersArray.find(
-              (s) => s.login === resjson[0].login
-            );
-            if (typeof isAlreadyIn !== "undefined") {
-              console.log("user already added");
-              sendRes({
-                message: "userAlreadyAdded",
-                uLogin: resjson[0].login,
-              });
-              return;
-            }
-            allStreamersArray.push({
-              login: resjson[0].login,
-              display_name: resjson[0].display_name,
-              image: resjson[0].profile_image_url,
-              online: false,
-              stream_data: {},
+          
+         
+          
+          if(allStreamersArray.length >= 100) return sendRes({message: "outOfLimit"})
+          //check for duplicates
+          var isAlreadyIn = allStreamersArray.find(
+            (s) => s.login === resjson[0].login
+          );
+          if (typeof isAlreadyIn !== "undefined") {
+            sendRes({
+              message: "userAlreadyAdded",
+              uLogin: resjson[0].login,
             });
-            chrome.storage.local.set({ all: allStreamersArray });
+            return;
           }
-          else {
-            chrome.storage.local.set({
-              all: [
-                {
-                  login: resjson[0].login,
-                  display_name: resjson[0].display_name,
-                  image: resjson[0].profile_image_url,
-                  online: false,
-                  stream_data: {},
-                },
-              ],
-            });
-          }
+          allStreamersArray.push({
+            login: resjson[0].login,
+            display_name: resjson[0].display_name,
+            image: resjson[0].profile_image_url,
+            online: false,
+            stream_data: {},
+          });
+          chrome.storage.local.set({ all: allStreamersArray });
+          
+          
           sendRes({ message: "success" , uLogin: resjson[0].login,});
         });
       });
     })
     .catch((err) => {
+      console.log(err)
       sendRes({ message: "fail" });
     });
 }
 
-function checkIfAnyOnlineStreamsAndSetIcon(streamers) {
+function checkForOnlineSetIcon(streamers) {
   let isAnyStreamOnline = false;
   streamers.forEach((stream) => {
     if (stream.online) isAnyStreamOnline = true;
@@ -156,14 +154,13 @@ function checkStreams() {
       });
 
       console.log("======== CHECKING STREAMS ========");
-      console.log("URL: ", url);
 
       fetch(url, {
         method: "GET",
       })
         .then((res) => {
           if (res.status !== 200) {
-            console.log("blad z check streams");
+            console.log("error from check streams");
             return resolve();
           }
           res.json().then((resjson) => {
@@ -173,10 +170,10 @@ function checkStreams() {
                 (stream) => stream.user_login === streamer.login
               );
               if (stream) {
-                // jesli ze streamers nie byl online a stream jest online to notifacation
-                //do testowania
-                if (!streamer.online) notifiy(streamer.login);
+                // check for stream that wasnt online before
+                
                 streamer.stream_data = stream;
+                if (!streamer.online) notifiy(streamer);
                 streamer.online = true;
               } else {
                 streamer.stream_data = {};
@@ -202,7 +199,7 @@ function checkStreams() {
             });
             chrome.storage.local.set({ all: streamers });
 
-            checkIfAnyOnlineStreamsAndSetIcon(streamers);
+            checkForOnlineSetIcon(streamers);
             resolve();
           });
         })
@@ -214,21 +211,38 @@ function checkStreams() {
   });
 }
 
-function notifiy(streamerLogin) {
-  chrome.notifications.create("streamer-online-" + streamerLogin, {
-    type: "basic",
+function notifiy(streamer) {
+  chrome.storage.local.get(["notifications"], (data) => {
+    if (data["notifications"]) {
+      createNotification(streamer)
+    }
+  })
+}
+
+function createNotification(streamer) {
+  chrome.notifications.create("streamer-online-" + streamer.login, {
+    type: "image",
     iconUrl: "images/128white.png",
+    imageUrl: streamer.stream_data.thumbnail.replace("{width}", "200").replace("{height}", "100"),
     title: "Title placeholder",
-    message: streamerLogin + " is online!",
+    message: streamer.login + " is online!",
     contextMessage: "Click on this notification to watch stream.",
     priority: 2,
   });
   chrome.notifications.onClicked.addListener((id) => {
-    if (id !== "streamer-online-" + streamerLogin) return;
-    chrome.notifications.clear("streamer-online-" + streamerLogin, () => {
+    if (id !== "streamer-online-" + streamer.login) return;
+    chrome.notifications.clear("streamer-online-" + streamer.login, () => {
       chrome.tabs.create({
-        url: "https://www.twitch.tv/" + streamerLogin,
+        url: "https://www.twitch.tv/" + streamer.login,
       });
     });
   });
+  
+}
+function notificationsActiveSwap({type}) {
+  if (type === "off") {
+    chrome.storage.local.set({ notifications: false });
+  } else if ( type === "on") {
+    chrome.storage.local.set({ notifications: true });
+  }
 }

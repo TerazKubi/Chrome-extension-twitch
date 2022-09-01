@@ -6,23 +6,23 @@ const addStreamerOutput = document.querySelector(".add-streamer-output-container
 const hideBtn = document.querySelector("#hideAddStreamerContainer")
 const showBtn = document.querySelector("#showAddStreamerContainer")
 const loader = document.querySelector(".loader")
+const bell = document.querySelector(".bell-container ")
 
 const addStreamerContainer = document.querySelector(".add-streamer-container")
 
 let isAddStreamerContainerActive = false
+let notificationsAvtive = true
 
 // event listeners
-
-
-addStreamerBtn.addEventListener("click", (e)=>{
+addStreamerBtn.addEventListener("click", e=>{
     addStreamer()   
 })
-hideBtn.addEventListener("click", (e) => {
+hideBtn.addEventListener("click", e => {
     addStreamerContainer.style.display = "none"
     isAddStreamerContainerActive = false
     
 })
-showBtn.addEventListener("click", (e) => {
+showBtn.addEventListener("click", e => {
     addStreamerContainer.style.display = "inline"
     streamerNameInput.focus()   
     isAddStreamerContainerActive = true
@@ -37,6 +37,18 @@ document.addEventListener("click", e => {
     if(!addStreamerContainer.contains(e.target) && e.target !== showBtn) {
         addStreamerContainer.style.display = "none"  
         isAddStreamerContainerActive = false
+        
+    }
+})
+bell.addEventListener("click", (e) => {
+    if (notificationsAvtive) {
+        document.querySelector(".line").style.display = "inline"
+        notificationsAvtive = false
+        chrome.runtime.sendMessage({message: "notificationsOff"})
+    } else {
+        document.querySelector(".line").style.display = "none"
+        notificationsAvtive = true
+        chrome.runtime.sendMessage({message: "notificationsOn"})
     }
 })
 
@@ -53,11 +65,12 @@ function delStreamer(streamerLogin) {
     chrome.runtime.sendMessage({message: "deleteStreamer", streamerLogin: streamerLogin}, (res)=>{
         if ( res.message === "delete_success" ) {
             streamerDiv.remove()
+            showTutorial(streamersDiv.childNodes)
         }
     })
 }
 
-function getStreamersFromStorageAndDisplay(){
+function getStreamersAndDisplay(){
 
     return new Promise((resolve, reject) => {
         chrome.runtime.sendMessage({message: "getAllStreamers"}, (res)=>{
@@ -90,10 +103,28 @@ function getStreamersFromStorageAndDisplay(){
                         <div class='streamer-viewer-count unselectable'>${s.stream_data.viewer_count}</div>
                     </div>`   
                     newStreamerDiv.setAttribute("title", s.stream_data.title)   
+                      
                     newStreamerDiv.addEventListener("click", (e) => {                  
                         const newUrl = "https://www.twitch.tv/" + s.login
                         chrome.tabs.create({url: newUrl })
                     }) 
+                   
+                    const im = newStreamerDiv.getElementsByTagName("img")[0]
+                    console.log(im)
+                    newStreamerDiv.addEventListener("mouseover", e=>{
+                        im.src = s.stream_data.thumbnail.replace("{width}", "60").replace("{height}", "60")
+                        
+                        
+                        return false
+                    })
+                    newStreamerDiv.addEventListener("mouseout", e=>{
+                        im.src =  s.image
+                        //newStreamerDiv.removeChild(prewievStreamDiv)
+                        //prewievStreamDiv.style.display = "none"
+                        return false
+                    })
+                    
+                    
                                   
                     if (s.login === "xayoo_") newStreamerDiv.classList.add("golden-user")
                     else newStreamerDiv.classList.add("clickable")
@@ -109,25 +140,35 @@ function getStreamersFromStorageAndDisplay(){
                 newStreamerDiv.appendChild(delBtn)
                 streamersDiv.appendChild(newStreamerDiv)
             })
+            showTutorial(streamersData)
             resolve()
             
             // else {} show some instruction while no streamers are added
         })         
     }) 
 }
-
+function showTutorial(streamersArray) {
+    if(!streamersArray.length) {
+        const tutorial = document.createElement("div")
+        tutorial.classList.add("tutorial")
+        tutorial.classList.add("unselectable")
+        tutorial.innerHTML = "Add some streamers by clicking plus icon below"
+        streamersDiv.appendChild(tutorial)
+    }
+}
 function refresh() {
     chrome.runtime.sendMessage({message: "refresh"}, (res)=>{
         if (res.message === "refreshSuccess") {
             try {
                 
-                getStreamersFromStorageAndDisplay()
+                getStreamersAndDisplay()
             } catch (error) {
                 console.log(error)
             }
         }
     })
 }
+
 function addStreamer() {
     var userInput = streamerNameInput.value
     if (userInput === "") return
@@ -155,19 +196,23 @@ function addStreamer() {
 
 async function start() {
     console.log("start")
-    //await getStreamersFromStorageAndDisplay()
+    chrome.runtime.sendMessage({message: "getNotificationSetting"}, res => {
+        if(!res.data) {
+            document.querySelector(".line").style.display = "inline"
+            notificationsAvtive = false
+        }
+    })
     refresh()
 
     setInterval(() => {
         console.log("auto refresh")
         try {
             
-            getStreamersFromStorageAndDisplay()
+            getStreamersAndDisplay()
         } catch (error) {
             console.log(error)
         }
     }, 30000)
-
 }
 function showInfo(output, txt){
     output.innerHTML = txt

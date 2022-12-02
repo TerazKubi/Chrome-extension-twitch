@@ -7,7 +7,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
   } else if (details.reason == "update") {
     chrome.alarms.clearAll();
     chrome.storage.local.set({ notifications: true });
-    chrome.alarms.create("myAlarm", { delayInMinutes: 1, periodInMinutes: 1 });
+    chrome.alarms.create("myAlarm", { delayInMinutes: 1, periodInMinutes: 2 });
     console.log("updated");
   }
 });

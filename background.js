@@ -74,7 +74,7 @@ async function hearthBeat() {
 }
 function addStreamer(userlogin, sendRes) {
   fetch(
-    `https://chrome-extension-twitch.herokuapp.com/streamers/streamer?login=${userlogin}`,
+    `https://cute-cyan-dove-cap.cyclic.app/streamers/streamer?login=${userlogin}`,
     {
       method: "GET",
     }
@@ -142,7 +142,7 @@ function checkForOnlineSetIcon(streamers) {
 
 function checkStreams() {
   var streamers;
-  var url = "https://chrome-extension-twitch.herokuapp.com/streamers/streams?";
+  var url = "https://cute-cyan-dove-cap.cyclic.app/streamers/streams?";
 
   return new Promise((resolve, reject) => {
     chrome.storage.local.get(["all"], (data) => {

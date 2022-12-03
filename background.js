@@ -224,7 +224,7 @@ function createNotification(streamer) {
     type: "image",
     iconUrl: "images/128white.png",
     imageUrl: streamer.stream_data.thumbnail.replace("{width}", "200").replace("{height}", "100"),
-    title: "Title placeholder",
+    title: "Online Twitch Streamers",
     message: streamer.login + " is online!",
     contextMessage: "Click on this notification to watch stream.",
     priority: 2,

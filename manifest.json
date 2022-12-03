@@ -1,7 +1,7 @@
 {
     "name": "Online Twitch Streamers",
     "description": "Check if your favourite twitch streamers are online.",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "manifest_version": 3,
     "icons": {
         "16": "./images/16white.png",
